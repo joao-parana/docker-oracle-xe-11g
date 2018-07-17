@@ -14,6 +14,7 @@ echo "export PATH=\$ORACLE_HOME/bin:\$PATH" >> /etc/profile.d/oracle-xe.sh
 echo "export ORACLE_SID=XE" >> /etc/profile.d/oracle-xe.sh
 . /etc/profile
 
+
 impdp () {
     DUMP_FILE=$(basename "$1")
     DUMP_NAME=${DUMP_FILE%.dmp} 
@@ -32,9 +33,17 @@ grant connect, resource to $DUMP_NAME;
 exit;
 EOL
 
+    su oracle -c "NLS_LANG=.$CHARACTER_SET $ORACLE_HOME/bin/sqlplus -S / as sysdba @/tmp/impdp.sql"
+    su oracle -c "NLS_LANG=.$CHARACTER_SET $ORACLE_HOME/bin/impdp IMPDP/IMPDP directory=IMPDP dumpfile=$DUMP_FILE $IMPDP_OPTIONS nologfile=y"
+    #Disable IMPDP user
+    echo -e 'ALTER USER IMPDP ACCOUNT LOCK;\nexit;' | su oracle -c "NLS_LANG=.$CHARACTER_SET $ORACLE_HOME/bin/sqlplus -S / as sysdba"
+}
+
+
+create_soma_schema () { 
     cat > /tmp/soma-schema.sql << EOL
+-- Listando Usuário começando com S
 select * from all_users where USERNAME like 'S%';
-# Caso não apareça o user SOMA faça:
 -- 
 -- concedendo privilégios globais 
 grant all on SYS.DBMS_CRYPTO to public; 
@@ -60,15 +69,11 @@ CREATE USER soma
   quota unlimited on TS_SOMA 
 ; 
 
-GRANT iconnect, create session, resource, dba TO SOMA WITH ADMIN OPTION;
+GRANT connect, create session, resource, dba TO SOMA WITH ADMIN OPTION;
 
 exit;
 EOL
 
-    su oracle -c "NLS_LANG=.$CHARACTER_SET $ORACLE_HOME/bin/sqlplus -S / as sysdba @/tmp/impdp.sql"
-    su oracle -c "NLS_LANG=.$CHARACTER_SET $ORACLE_HOME/bin/impdp IMPDP/IMPDP directory=IMPDP dumpfile=$DUMP_FILE $IMPDP_OPTIONS nologfile=y"
-    #Disable IMPDP user
-    echo -e 'ALTER USER IMPDP ACCOUNT LOCK;\nexit;' | su oracle -c "NLS_LANG=.$CHARACTER_SET $ORACLE_HOME/bin/sqlplus -S / as sysdba"
     su oracle -c "NLS_LANG=.$CHARACTER_SET $ORACLE_HOME/bin/sqlplus -S / as sysdba @/tmp/soma-schema.sql"
     echo -e 'select * from all_users;' | su oracle -c "NLS_LANG=.$CHARACTER_SET $ORACLE_HOME/bin/sqlplus -S / as sysdba"
 }
@@ -127,6 +132,9 @@ case "$1" in
         fi
 
         /etc/init.d/oracle-xe start
+
+        echo "Starting SOMA schema creation process"
+        create_soma_schema $SOMA_PASSWD
 
         echo "Starting import scripts from '/docker-entrypoint-initdb.d':"
 
