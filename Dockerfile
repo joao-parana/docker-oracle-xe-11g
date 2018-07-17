@@ -1,6 +1,8 @@
 FROM ubuntu:14.04
 
-MAINTAINER Maksym Bilenko <sath891@gmail.com>
+MAINTAINER João Antonio Ferreira <joao.parana@gmail.com>
+
+ARG SOMA_PASSWD=soma_secret
 
 # get rid of the message: "debconf: unable to initialize frontend: Dialog"
 ENV DEBIAN_FRONTEND noninteractive
@@ -33,6 +35,8 @@ ENV processes 500
 ENV sessions 555
 ENV transactions 610
 
+# entrypoint.sh depende do diretório /database-data e a variável SOMA_PASSWD que deve vir via ARG
+RUN mkdir /database-data/
 ADD entrypoint.sh /
 ENTRYPOINT ["/entrypoint.sh"]
 CMD [""]

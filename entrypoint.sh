@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SOMA_PASSWD=soma_123
+# SOMA_PASSWD=soma_123 deve vir via ARG no Dockerfile
 
 # Prevent owner issues on mounted folders
 chown -R oracle:dba /u01/app/oracle
