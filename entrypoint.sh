@@ -41,6 +41,10 @@ EOL
 
 
 create_soma_schema () { 
+    echo "`date` - Criando o usuário SOMA e o seu Tablespace"
+    
+    ls -lat /database-data
+
     cat > /tmp/soma-schema.sql << EOL
 -- Listando Usuário começando com S
 select * from all_users where USERNAME like 'S%';

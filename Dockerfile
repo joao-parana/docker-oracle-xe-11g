@@ -36,7 +36,9 @@ ENV sessions 555
 ENV transactions 610
 
 # entrypoint.sh depende do diretório /database-data e a variável SOMA_PASSWD que deve vir via ARG
-RUN mkdir /database-data
+RUN mkdir /database-data && chown -R oracle:dba /database-data
 ADD entrypoint.sh /
+
 ENTRYPOINT ["/entrypoint.sh"]
+
 CMD [""]
