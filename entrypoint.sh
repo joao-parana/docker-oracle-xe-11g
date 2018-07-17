@@ -1,5 +1,9 @@
 #!/bin/bash
 
+echo "`date` - Veja abaixo o Environment disponível para o Entrypoint "
+env
+echo "`date` "
+    
 # SOMA_PASSWD=soma_123 deve vir via ARG no Dockerfile
 
 # Prevent owner issues on mounted folders
@@ -14,6 +18,8 @@ echo "export PATH=\$ORACLE_HOME/bin:\$PATH" >> /etc/profile.d/oracle-xe.sh
 echo "export ORACLE_SID=XE" >> /etc/profile.d/oracle-xe.sh
 . /etc/profile
 
+
+echo "`date` - Iniciando o Oracle XE"
 
 impdp () {
     DUMP_FILE=$(basename "$1")
@@ -41,7 +47,7 @@ EOL
 
 
 create_soma_schema () { 
-    echo "`date` - Criando o usuário SOMA e o seu Tablespace"
+    echo "`date` - Criando o usuário SOMA e o seu Tablespace. Usaremo a SOMA_PASSWD = $SOMA_PASSWD "
     
     ls -lat /database-data
 
