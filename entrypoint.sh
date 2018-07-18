@@ -81,6 +81,38 @@ CREATE USER soma
 
 GRANT connect, create session, resource, dba TO SOMA WITH ADMIN OPTION;
 
+-- tabela env_state para guardar o estado do ambiente de persistência
+
+CREATE TABLE soma.env_state
+(
+  id          INT not null,
+  state       INT not null,
+  description VARCHAR2(80),
+  date_added  TIMESTAMP
+);
+ALTER TABLE soma.env_state ADD (
+  CONSTRAINT env_state_pk PRIMARY KEY (id));  
+CREATE SEQUENCE soma.env_state_seq START WITH 1;
+CREATE OR REPLACE TRIGGER soma.env_state_before_insert 
+BEFORE INSERT ON env_state 
+FOR EACH ROW
+BEGIN
+  SELECT soma.env_state_seq.NEXTVAL
+  INTO   :new.id
+  FROM   dual;
+END;
+/
+
+INSERT INTO soma.env_state(id, state, description, date_added)
+  VALUES(soma.env_state_seq.NEXTVAL, 1, 'tablespace ts_soma was created', sysdate);
+commit;
+
+INSERT INTO soma.env_state(id, state, description, date_added)
+  VALUES(soma.env_state_seq.NEXTVAL, 2, 'soma user was created', sysdate);
+commit;
+
+select trim(max(state)) as current_env_state from soma.env_state;
+
 exit;
 EOL
 
