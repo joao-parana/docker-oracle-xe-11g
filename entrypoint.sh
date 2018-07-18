@@ -168,36 +168,41 @@ case "$1" in
             printf 8080\\n1521\\n${DEFAULT_SYS_PASS}\\n${DEFAULT_SYS_PASS}\\ny\\n | /etc/init.d/oracle-xe configure
             echo "Setting sys/system passwords"
             echo  alter user sys identified by \"$DEFAULT_SYS_PASS\"\; | su oracle -s /bin/bash -c "$ORACLE_HOME/bin/sqlplus -s / as sysdba" > /dev/null 2>&1
-               echo  alter user system identified by \"$DEFAULT_SYS_PASS\"\; | su oracle -s /bin/bash -c "$ORACLE_HOME/bin/sqlplus -s / as sysdba" > /dev/null 2>&1
+            echo  alter user system identified by \"$DEFAULT_SYS_PASS\"\; | su oracle -s /bin/bash -c "$ORACLE_HOME/bin/sqlplus -s / as sysdba" > /dev/null 2>&1
 
             echo "Database initialized. Please visit http://#containeer:8080/apex to proceed with configuration"
         fi
 
         /etc/init.d/oracle-xe start
+        
+        # TODO: testar também se tamanho é maior que zero (opção -s)
+        if [ -f /database-data/soma.dbf ]; then
+            echo "`date` - Arquivo /database-data/soma.dbf já existe. Assumindo que o usuário SOMA e o seu Tablespace já foram criados."
+        else
+            echo "Starting SOMA schema creation process"
+            create_soma_schema $SOMA_PASSWD 
+                    
+            echo "Starting import scripts from '/docker-entrypoint-initdb.d':"
 
-        echo "Starting SOMA schema creation process"
-        create_soma_schema $SOMA_PASSWD
+            for fn in $(ls -1 /docker-entrypoint-initdb.d/* 2> /dev/null)
+            do
+                # execute script if it didn't execute yet or if it was changed
+                cat /docker-entrypoint-initdb.d/.cache 2> /dev/null | grep "$(md5sum $fn)" || impFile $fn
+            done
 
-        echo "Starting import scripts from '/docker-entrypoint-initdb.d':"
+            # clear cache
+            if [ -e /docker-entrypoint-initdb.d/.cache ]; then
+                rm /docker-entrypoint-initdb.d/.cache
+            fi
 
-        for fn in $(ls -1 /docker-entrypoint-initdb.d/* 2> /dev/null)
-        do
-            # execute script if it didn't execute yet or if it was changed
-            cat /docker-entrypoint-initdb.d/.cache 2> /dev/null | grep "$(md5sum $fn)" || impFile $fn
-        done
+            # regenerate cache
+            ls -1 /docker-entrypoint-initdb.d/*.sh 2> /dev/null | xargs md5sum >> /docker-entrypoint-initdb.d/.cache
+            ls -1 /docker-entrypoint-initdb.d/*.sql 2> /dev/null | xargs md5sum >> /docker-entrypoint-initdb.d/.cache
+            ls -1 /docker-entrypoint-initdb.d/*.dmp 2> /dev/null | xargs md5sum >> /docker-entrypoint-initdb.d/.cache
 
-        # clear cache
-        if [ -e /docker-entrypoint-initdb.d/.cache ]; then
-            rm /docker-entrypoint-initdb.d/.cache
+            echo "Import finished"
+            echo
         fi
-
-        # regenerate cache
-        ls -1 /docker-entrypoint-initdb.d/*.sh 2> /dev/null | xargs md5sum >> /docker-entrypoint-initdb.d/.cache
-        ls -1 /docker-entrypoint-initdb.d/*.sql 2> /dev/null | xargs md5sum >> /docker-entrypoint-initdb.d/.cache
-        ls -1 /docker-entrypoint-initdb.d/*.dmp 2> /dev/null | xargs md5sum >> /docker-entrypoint-initdb.d/.cache
-
-        echo "Import finished"
-        echo
 
         echo "Database ready to use. Enjoy! ;)"
 
