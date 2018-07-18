@@ -14,6 +14,11 @@ This **Dockerfile** is a [trusted build](https://registry.hub.docker.com/u/sath8
 
 * Em entrepoint.sh usar `node checkState.js` para obter o Estado atual da Persitência
 
+
+Esta issue [https://github.com/oracle/node-oracledb/issues/825](https://github.com/oracle/node-oracledb/issues/825) descreve como instalar no Contêiner Docker Alpine Linux
+
+O código dos progranas JavaScript são esses abaixo:
+
 ```javascript
 /*
   * NAME
