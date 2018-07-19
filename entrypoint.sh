@@ -1,5 +1,7 @@
 #!/bin/bash
 
+INITIAL_DATETIME=`date`
+
 echo "`date` - Veja abaixo o Environment disponível para o Entrypoint "
 env
 echo "`date` "
@@ -175,6 +177,7 @@ case "$1" in
 
         /etc/init.d/oracle-xe start
         
+        # Verifica-se já existe o usuário SOMA de forma indireta, procurando o arquivo /database-data/soma.dbf criado anteriormente
         # TODO: testar também se tamanho é maior que zero (opção -s)
         if [ -f /database-data/soma.dbf ]; then
             echo "`date` - Arquivo /database-data/soma.dbf já existe. Assumindo que o usuário SOMA e o seu Tablespace já foram criados."
@@ -203,6 +206,8 @@ case "$1" in
             echo "Import finished"
             echo
         fi
+
+        echo "INITIAL_DATETIME = $INITIAL_DATETIME FINAL_DATETIME = `date`"
 
         echo "Database ready to use. Enjoy! ;)"
 
